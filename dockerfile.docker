@@ -1,0 +1,20 @@
+FROM python:3.11
+EXPOSE 8083
+
+RUN mkdir /user
+ENV HOME /user
+WORKDIR /user
+ENV AIRFLOW_HOME ${HOME}/airflow
+
+COPY ./requirements.txt .
+COPY ./dags ./dags
+COPY ./airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+
+RUN pip install -r requirements.txt
+RUN airflow db migrate
+RUN airflow users create --username thuyle --password thuyle --role Admin --email test@test.com --firstname Thuy --lastname Le
+
+
+CMD ["airflow", "standalone"]
+
+

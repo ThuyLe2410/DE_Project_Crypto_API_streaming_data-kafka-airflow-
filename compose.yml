@@ -14,6 +14,19 @@ services:
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
     networks:
       - kafka-network
+  
+  aiflow:
+    container_name: airflow_kafka
+    ports:
+      - "8083:8083"
+    build:
+      context: .
+      dockerfile: dockerfile.docker
+    volumes:
+      - ./dags:/user/dags
+      - ./airflow.cfg:/user/airflow/airflow.cfg
+    networks:
+      - kafka-network
 
 
 networks:
