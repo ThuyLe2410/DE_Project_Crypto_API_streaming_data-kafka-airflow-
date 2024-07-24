@@ -7,11 +7,13 @@ import os
 import requests
 import json
 from kafka import KafkaProducer
+from kafka import KafkaConsumer
 from airflow.models.connection import Connection
 from airflow.decorators import task
 from airflow.exceptions import AirflowNotFoundException
 from airflow.hooks.base import BaseHook
 from airflow import settings
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 
 POSTGRES_HOST=os.environ.get("POSTGRES_HOST")
@@ -51,13 +53,22 @@ def extract_data(data):
     return extracted_data
 
 
-
 def streaming_data():
     data=get_data()
     extracted_data=extract_data(data)
     producer=KafkaProducer(bootstrap_servers=["kafka:9092"])
-    producer.send("Topic_bitcoin_price",json.dumps(extracted_data).encode("utf-8"))
+    producer.send("bitcoin_price",json.dumps(extracted_data).encode('utf-8'))
 
+
+# def kafka_consumer():
+#     consumer=KafkaConsumer("bitcoin_price",
+#                            bootstrap_servers=["kafka:9092"],
+#                            auto_offset_reset="earliest",
+#                            enable_auto_commit=True,
+#                            group_id="bitcoin-group",)
+#     return consumer
+    
+    
 with DAG(
     dag_id="kafka_streaming_data_from_API",
     start_date=datetime.datetime(2024,7,23),
@@ -97,7 +108,29 @@ with DAG(
         conn_id=conn.conn_id, 
     )
     
-    create_connection() >> streaming_task >> create_table
+    
+    @task 
+    def load_data():
+        consumer=KafkaConsumer("bitcoin_price",
+                            bootstrap_servers=["kafka:9092"],
+                            auto_offset_reset="earliest",
+                            enable_auto_commit=True,
+                            group_id="bitcoin-group",)
+        pg_hook=PostgresHook(connection=conn, database=POSTGRES_DB)
+        print('hook', pg_hook)
+        insert_query = """INSERT INTO bitcoin_price (timestamp, name, price, volume_24h, percentage_change_24h) 
+                            VALUES (%s, %s, %s, %s, %s)"""
+    
+        for msg in consumer:
+            kafka_message=json.loads(msg.value.decode('utf-8'))
+            pg_hook.run(insert_query, parameters=(
+                                                kafka_message['timestamp'], 
+                                                kafka_message['name'], 
+                                                kafka_message['price'], 
+                                                kafka_message['volume_24h'], 
+                                                kafka_message['percentage_change_24h']))
+            
+    create_connection() >> streaming_task >> create_table >> load_data()
     
 
 

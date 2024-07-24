@@ -4,6 +4,6 @@ CREATE TABLE bitcoin_price (
     timestamp VARCHAR(50),
     name VARCHAR(10),
     price FLOAT,
-    volume_24 FLOAT,
-    percentage_change_24 FLOAT
+    volume_24h FLOAT,
+    percentage_change_24h FLOAT
 );
