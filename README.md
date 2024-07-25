@@ -3,7 +3,7 @@
 This project is designed to demonstrate a complete data streaming pipeline that captures real-time cryptocurrency data (Bitcoin) from an external API, processes it using Apache Airflow, streams it through Apache Kafka, and stores it in a PostgreSQL database. The stored data is then visualized using Metabase. The entire pipeline is containerized using Docker for easy deployment and scalability.
 
 ## Architecture overview:
-![Architecture diagram](image-1.png)
+![Architecture](image.png)
 
 The architecture consists of the following components:
 
