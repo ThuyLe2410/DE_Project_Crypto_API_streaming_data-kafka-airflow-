@@ -47,7 +47,21 @@ services:
       - ./airflow.cfg:/user/airflow/airflow.cfg
     networks:
       - kafka-network
-
+  
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase_kafka
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: ${POSTGRES_DB}
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${POSTGRES_USER}
+      MB_DB_PASS: ${POSTGRES_PASSWORD}
+      MB_DB_HOST: postgres
+    networks:
+      - kafka-network
 
 networks:
   kafka-network:
